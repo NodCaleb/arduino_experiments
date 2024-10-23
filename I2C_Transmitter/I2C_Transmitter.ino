@@ -4,26 +4,42 @@
 #define CLOSE_PIN 3
 #define I2C_ADDRESS 9
 
+uint8_t data = 0x00;
+
 void setup() {
   Wire.begin(); // Join the I2C bus as master
   Serial.begin(9600); // Start serial communication for debugging
+
+  // Configure pins D2 and D3 as inputs
+  pinMode(2, INPUT_PULLUP);
+  pinMode(3, INPUT_PULLUP);
+
+  // Attach interrupts
+  // Attach interrupt 0 (connected to pin D2) to function handleInterrupt1
+  attachInterrupt(digitalPinToInterrupt(2), handleInterrupt1, FALLING);
+
+  // Attach interrupt 1 (connected to pin D3) to function handleInterrupt2
+  attachInterrupt(digitalPinToInterrupt(3), handleInterrupt2, FALLING);
 }
 
 void loop() {
-  // Send data to Slave 1 (address 0x08)
-  Wire.beginTransmission(I2C_ADDRESS); // Start communication with Slave 1
-  Wire.write("Hello, Slave 1"); // Send data
-  Wire.endTransmission(); // End communication
 
-  delay(500); // Wait before sending data again
+  if (data != 0x00){
+    Wire.beginTransmission(I2C_ADDRESS);
+    Wire.write(data);
+    Wire.endTransmission();
+    data = 0x00;
+  } 
 
-  // Request data from Slave 2 (address 0x09)
-  // Wire.requestFrom(0x09, 13); // Request 13 bytes of data from Slave 2
+  delay(100); // Delay between each loop
+}
 
-  // while (Wire.available()) {
-  //   char c = Wire.read(); // Receive each byte
-  //   Serial.print(c); // Print the received data to Serial Monitor
-  // }
+// ISR for interrupt on pin D2 (INT0)
+void handleInterrupt1() {
+  data = 0x01;
+}
 
-  delay(1000); // Delay between each loop
+// ISR for interrupt on pin D3 (INT1)
+void handleInterrupt2() {
+  data = 0x02;
 }
